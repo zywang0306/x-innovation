@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Markers</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDDlLcOe9ucJ4k06D8DMiOk4yM2vKyzTVg
+&callback=initMap&libraries=visualization,places&v=weekly"
+        defer
+    ></script>
+    <style type="text/css">
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+
+      /* Makes the sample page fill the window. */
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+    <script>
+      let map, heatmap;
+
+      function initMap() {
+        map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 11,  
+          center: new google.maps.LatLng(29.7640182, -95.2738409),
+          mapTypeId: "terrain",
+        });
+
+        //code for search box start here
+        const input = document.getElementById("pac-input");
+        const searchBox = new google.maps.places.SearchBox(input);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+        // Bias the SearchBox results towards current map's viewport.
+        map.addListener("bounds_changed", () => {
+          searchBox.setBounds(map.getBounds());
+        });
+        let markers = [];
+
+        searchBox.addListener("places_changed", () => {
+          const places = searchBox.getPlaces();
+
+          if (places.length == 0) {
+            return;
+          }
+          // Clear out the old markers.
+          markers.forEach((marker) => {
+            marker.setMap(null);
+          });
+          markers = [];
+          // For each place, get the icon, name and location.
+          const bounds = new google.maps.LatLngBounds();
+          places.forEach((place) => {
+            if (!place.geometry) {
+              console.log("Returned place contains no geometry");
+              return;
+            }
+            const icon = {
+              url: place.icon,
+              size: new google.maps.Size(71, 71),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(17, 34),
+              scaledSize: new google.maps.Size(25, 25),
+            };
+            // Create a marker for each place.
+            markers.push(
+              new google.maps.Marker({
+                map,
+                icon,
+                title: place.name,
+                position: place.geometry.location,
+              })
+            );
+
+            if (place.geometry.viewport) {
+              // Only geocodes have viewport.
+              bounds.union(place.geometry.viewport);
+            } else {
+              bounds.extend(place.geometry.location);
+            }
+          });
+          map.fitBounds(bounds);
+        });
+        //code for search box end here
+      
+        // Show up the 311 data by json
+        const script = document.createElement("script");
+        // This example uses a local copy of the GeoJSON 
+        script.src =
+          "311testjson.json";
+        document.getElementsByTagName("head")[0].appendChild(script);
+        heatmap = new google.maps.visualization.HeatmapLayer({
+      data: getPoints(),   //show heat map data
+      map: map
+           });
+        
+      };
+
+      // Loop through the results array and place a marker for each
+      // set of coordinates.
+      const eqfeed_callback = function (results) {
+        for (let i = 0; i < results.features.length; i++) {
+          const coords = results.features[i].geometry.coordinates;
+          const latLng = new google.maps.LatLng(coords[1], coords[0]);
+          new google.maps.Marker({
+            position: latLng,
+            map: map,
+          });
+        }
+      };
+
+      //sample heatmap data
+      function getPoints() {
+  return [
+    new google.maps.LatLng(29.775985, -95.362726),
+    new google.maps.LatLng(29.775985, -95.363726),
+    new google.maps.LatLng(29.776985, -95.363726),
+    new google.maps.LatLng(29.775985, -95.364726),
+    new google.maps.LatLng(29.776985, -95.364726),
+    new google.maps.LatLng(29.775985, -95.365726),
+    new google.maps.LatLng(29.760339, -95.350988),
+    new google.maps.LatLng(29.760339, -95.351988),
+    new google.maps.LatLng(29.760339, -95.352988),
+    new google.maps.LatLng(29.760339, -95.353988),
+    new google.maps.LatLng(29.760339, -95.354988),
+    new google.maps.LatLng(29.760339, -95.355988),
+    new google.maps.LatLng(29.757954, -95.389784),
+    new google.maps.LatLng(29.756954, -95.389784),
+    new google.maps.LatLng(29.755954, -95.389784),
+    new google.maps.LatLng(29.754954, -95.389784),
+    new google.maps.LatLng(29.753954, -95.389784),
+    new google.maps.LatLng(29.752954, -95.389784),
+    new google.maps.LatLng(29.751954, -95.389784),
+
+    new google.maps.LatLng(29.775985, -95.393726),
+    new google.maps.LatLng(29.775985, -95.363726),
+    new google.maps.LatLng(29.745985, -95.363726),
+
+
+  ];
+}
+
+      
+    </script>
+  </head>
+  <body>
+    <input
+      id="pac-input"
+      class="controls"
+      type="text"
+      placeholder="Search Box"
+    />
+    <div id="map"></div>
+    
+  </body>
+</html>
